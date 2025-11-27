@@ -10,7 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 
-@TeleOp(name = "RobotCode2P")
+@TeleOp(name = "RobotCode1P")
 public class RobotCode_20251P extends OpMode {
     //---------------------------C-h-a-s-i-s--------------------------
     DcMotorEx m_fl;
@@ -22,7 +22,12 @@ public class RobotCode_20251P extends OpMode {
     DcMotorEx m_shooter2;
     ConfigureIMU bench = new ConfigureIMU();
     boolean mechaMode = false;
-    //ConfigureDistance DistanceBench = new ConfigureDistance();
+
+
+    //---------------------------G-l-o-b-a-l--------------------------
+
+    double DesearedRPMlong = 650 ;
+    final double DesearedRPMshort = 530;
 
 
     @Override
@@ -41,7 +46,6 @@ public class RobotCode_20251P extends OpMode {
         m_shooter2 = hardwareMap.get(DcMotorEx.class, "ShooterMotorB");
 
         bench.init(hardwareMap);
-        //DistanceBench.init(hardwareMap);
 
         m_shooter2.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         m_intake.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -57,11 +61,13 @@ public class RobotCode_20251P extends OpMode {
 
     @Override
     public void loop() {
-        telemetry.addLine("Tutorial J1 (Chasis):");
+        telemetry.addLine("Tutorial (Chasis):");
         telemetry.addLine("El movimiento del chasis es libre");
         telemetry.addLine("X - Restablecer giroscopio");
         telemetry.addLine();
-        telemetry.addLine("Tutorial J2 (Mecanismos):");
+        telemetry.addLine("Start - Cambio de modo");
+        telemetry.addLine();
+        telemetry.addLine("Tutorial (Mecanismos):");
         telemetry.addLine("RT - Disparar");
         telemetry.addLine("LT - Recolectar");
         telemetry.addLine("Cruceta Arriba - RPM 650");
@@ -76,7 +82,6 @@ public class RobotCode_20251P extends OpMode {
         telemetry.addData("Velocidad del disparador:", m_shooter2.getVelocity());
         telemetry.addData("Velocidad del recolector:",m_intake.getVelocity());
         telemetry.addData("Modo mecanico:", mechaMode);
-        //telemetry.addData("Distancia del sensor:", DistanceBench.getDistance());
         telemetry.update();
 
         chasisMethod();
@@ -119,8 +124,6 @@ public class RobotCode_20251P extends OpMode {
     public void shootMechanism(){
 
         if (mechaMode == true) {
-            double DesearedRPMlong = 650;
-            double DesearedRPMshort = 530;
 
             if (gamepad1.dpad_down) {
                 DesearedRPMlong = 570;
@@ -160,8 +163,12 @@ public class RobotCode_20251P extends OpMode {
 
     }
     public void intakeMechanism(){
-      if (mechaMode == true)
-        m_intake.setPower(-gamepad1.left_trigger);
+      if (mechaMode == true){
+          m_intake.setPower(gamepad1.left_trigger);
+      }
+      else {
+          m_intake.setPower(0);
+      }
 
     }
     public void resetGyro(){
@@ -170,7 +177,7 @@ public class RobotCode_20251P extends OpMode {
         }
     }
     public void changeMode(){
-        if (gamepad1.start){
+        if (gamepad1.startWasPressed()){
             mechaMode =  !mechaMode;
         }
 

@@ -8,7 +8,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 
 public class ConfigureDistance {
     private DistanceSensor DistanceSens;
-    DcMotor Motor1;
 
     public void init(HardwareMap hwMap)
     {

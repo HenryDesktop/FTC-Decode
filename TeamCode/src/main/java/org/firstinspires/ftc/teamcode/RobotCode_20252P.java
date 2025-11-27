@@ -1,11 +1,12 @@
 package org.firstinspires.ftc.teamcode;
 
-import static java.lang.Thread.sleep;
-
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -14,15 +15,16 @@ public class RobotCode_20252P extends OpMode {
     //---------------------------C-h-a-s-i-s--------------------------
     DcMotorEx m_fl, m_fr, m_bl, m_br;
     DcMotorEx m_intake;
-    DcMotorEx m_shooter1;
-    DcMotorEx m_shooter2;
-    ConfigureIMU bench = new ConfigureIMU();
+    DcMotorEx m_leftshooter;
+    DcMotorEx m_rightshooter;
+    CRServo s_midintake;
+    ConfigureIMU IMUHeading = new ConfigureIMU();
 
 
     //---------------------------G-l-o-b-a-l--------------------------
 
-    double DesearedRPMlong = 650 ;
-    double DesearedRPMshort = 530;
+    double DesearedRPMlong = 1140 ;
+    final double DesearedRPMshort = 900;
 
 
     @Override
@@ -37,58 +39,56 @@ public class RobotCode_20252P extends OpMode {
 
         m_intake = hardwareMap.get(DcMotorEx.class, "IntakeMotor");
 
-        m_shooter1 = hardwareMap.get(DcMotorEx.class, "ShooterMotorA");
-        m_shooter2 = hardwareMap.get(DcMotorEx.class, "ShooterMotorB");
+        m_leftshooter = hardwareMap.get(DcMotorEx.class, "ShooterMotorA");
+        m_rightshooter = hardwareMap.get(DcMotorEx.class, "ShooterMotorB");
 
-        bench.init(hardwareMap);
-        //DistanceBench.init(hardwareMap);
+        s_midintake = hardwareMap.get(CRServo.class, "Servo");
 
-        m_shooter2.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
+        IMUHeading.init(hardwareMap);
+
+        m_rightshooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         m_intake.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
-        m_shooter2.setVelocityPIDFCoefficients(20,0,5,13.5);
+        m_rightshooter.setVelocityPIDFCoefficients(60,0.0001,30,.0005);
 
         m_fr.setDirection(DcMotorSimple.Direction.REVERSE);
         m_bl.setDirection(DcMotorSimple.Direction.FORWARD);
         m_br.setDirection(DcMotorSimple.Direction.REVERSE);
         m_fl.setDirection(DcMotorSimple.Direction.FORWARD);
+
     }
 
 
     @Override
     public void loop() {
-        telemetry.addLine("Tutorial J1 (Chasis):");
-        telemetry.addLine("El movimiento del chasis es libre");
-        telemetry.addLine("X - Restablecer giroscopio");
+        telemetry.addLine("Back & Start - Resetear IMU");
+        telemetry.addLine("Cruceta Arriba - RPM 1160");
+        telemetry.addLine("Cruceta Abajo - RPM 1080");
+        telemetry.addLine("Cruceta Derecha - RPM 1140");
+        telemetry.addLine("Cruceta Izquierda - RPM 1120");
         telemetry.addLine();
-        telemetry.addLine("Tutorial J2 (Mecanismos):");
-        telemetry.addLine("RT - Disparar");
-        telemetry.addLine("LT - Recolectar");
-        telemetry.addLine("Cruceta Arriba - RPM 650");
-        telemetry.addLine("Cruceta Abajo - RPM 570");
-        telemetry.addLine("Cruceta Derecha - RPM 630");
-        telemetry.addLine("Cruceta Izquierda - RPM 600");
-        telemetry.addLine();
-        telemetry.addLine();
-        telemetry.addLine();
-        telemetry.addLine("Datos del robot:");
-        telemetry.addData("Orientación:", bench.getHeading(AngleUnit.DEGREES));
-        telemetry.addData("Velocidad del disparador:", m_shooter2.getVelocity());
+        telemetry.addData("Orientación:", IMUHeading.getHeading(AngleUnit.DEGREES));
+        telemetry.addData("RPM del disparador:", DesearedRPMlong);
+        telemetry.addData("Velocidad del disparador:", m_rightshooter.getVelocity());
         telemetry.addData("Velocidad del recolector:",m_intake.getVelocity());
         telemetry.update();
+
+
+
 
         chasisMethod();
         shootMechanism();
         intakeMechanism();
+        servoMechanism();
         resetGyro();
 
     }
-    public void chasisMethod(){
+    public void chasisMethod() {
 
-        double y = gamepad1.left_stick_y;
-        double x = -gamepad1.left_stick_x;
-        double rx = gamepad1.right_stick_x;
-        double botHeading = Math.toRadians(bench.getHeading(AngleUnit.DEGREES));
+        double y = gamepad1.left_stick_y * 2;
+        double x = -gamepad1.left_stick_x * 2;
+        double rx = gamepad1.right_stick_x * 4;
+        double botHeading = Math.toRadians(IMUHeading.getHeading(AngleUnit.DEGREES));
 
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
@@ -107,50 +107,70 @@ public class RobotCode_20252P extends OpMode {
         m_fr.setPower(FRpower / MaxPower);
         m_bl.setPower(BLpower / MaxPower);
         m_br.setPower(BRpower / MaxPower);
-
     }
-    public void shootMechanism(){
 
-        if (gamepad2.dpad_down){
-            DesearedRPMlong = 570;
-        }
-        if (gamepad2.dpad_left){
-            DesearedRPMlong = 600;
-        }
-        if (gamepad2.dpad_right){
-            DesearedRPMlong = 630;
+    public void shootMechanism() {
 
-        }
-        if (gamepad2.dpad_up){
-            DesearedRPMlong = 650;
-        }
+        double actualVelocity = DesearedRPMshort;
+        double joystickVel = gamepad2.left_stick_x *.5;
 
-        if(gamepad2.right_trigger >=0.1){
+        // Selección de RPM
+        if (gamepad2.dpad_down)  DesearedRPMlong = 1080;
+        if (gamepad2.dpad_left)  DesearedRPMlong = 1120;
+        if (gamepad2.dpad_right) DesearedRPMlong = 1140;
+        if (gamepad2.dpad_up)    DesearedRPMlong = 1160;
 
-            telemetry.addData("RPM del disparador:", DesearedRPMlong);
-            m_shooter1.setPower(-gamepad2.right_trigger*.4);
-            m_shooter2.setPower(gamepad2.right_trigger*.4);
-        }
-        else{
-            if ( gamepad2.a ) {
-                m_shooter1.setVelocity(-DesearedRPMlong);
-                m_shooter2.setVelocity(DesearedRPMlong);
-            } else if ( gamepad2.b ) {
-                m_shooter1.setVelocity(-DesearedRPMshort);
-                m_shooter2.setVelocity(DesearedRPMshort);
-            } else {
-                m_shooter1.setPower(-gamepad2.left_stick_x*.7);
-                m_shooter2.setPower(gamepad2.left_stick_x*.7);
-            }
+        if (gamepad2.right_bumper) {
+            actualVelocity = DesearedRPMlong;
         }
 
+
+        if (gamepad2.right_trigger >= 0.15) {
+            m_leftshooter.setVelocity(-actualVelocity );
+            m_rightshooter.setVelocity( actualVelocity );
+
+        }
+        else if (gamepad2.left_stick_x >=0.15 || gamepad2.left_stick_x <=-0.15){
+            m_leftshooter.setVelocity(-joystickVel );
+            m_rightshooter.setVelocity( joystickVel );
+        }
+        else {
+            m_leftshooter.setVelocity(0);
+             m_rightshooter.setVelocity(0);
+        }
     }
+
     public void intakeMechanism(){
-            m_intake.setPower(-gamepad2.left_trigger);
+        double velTrigger = gamepad2.left_trigger * 1.5;
+        double velJoystick = gamepad2.right_stick_x *.5;
+
+        if (gamepad2.left_trigger >=0.15){
+            m_intake.setPower(velTrigger);
+            s_midintake.setPower(1);
+        }
+        else if (gamepad2.right_stick_x >= 0.15 || gamepad2.right_stick_x <= -0.15){
+            m_intake.setPower(velJoystick);
+            s_midintake.setPower(0);
+
+        }
+        else {
+            s_midintake.setPower(0);
+            m_intake.setPower(0);
+        }
+
     }
+    public void servoMechanism(){
+        if (gamepad2.back) {
+            s_midintake.setPower(1);
+        }
+        if (gamepad2.start) {
+            s_midintake.setPower(0);
+        }
+    }
+
     public void resetGyro(){
-        if (gamepad1.back){
-            bench.resetImu();
+        if (gamepad1.back && gamepad1.start){
+            IMUHeading.resetImu();
         }
     }
 
