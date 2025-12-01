@@ -55,6 +55,8 @@ public class RobotCode_20252P extends OpMode {
         m_bl.setDirection(DcMotorSimple.Direction.FORWARD);
         m_br.setDirection(DcMotorSimple.Direction.REVERSE);
         m_fl.setDirection(DcMotorSimple.Direction.FORWARD);
+        m_intake.setDirection(DcMotorSimple.Direction.REVERSE);
+
 
     }
 
@@ -87,7 +89,7 @@ public class RobotCode_20252P extends OpMode {
 
         double y = gamepad1.left_stick_y * 2;
         double x = -gamepad1.left_stick_x * 2;
-        double rx = gamepad1.right_stick_x * 4;
+        double rx = gamepad1.right_stick_x * 3;
         double botHeading = Math.toRadians(IMUHeading.getHeading(AngleUnit.DEGREES));
 
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
@@ -112,7 +114,7 @@ public class RobotCode_20252P extends OpMode {
     public void shootMechanism() {
 
         double actualVelocity = DesearedRPMshort;
-        double joystickVel = gamepad2.left_stick_x *.5;
+        double joystickVel = gamepad2.left_stick_x;
 
         // Selección de RPM
         if (gamepad2.dpad_down)  DesearedRPMlong = 1080;
@@ -131,12 +133,20 @@ public class RobotCode_20252P extends OpMode {
 
         }
         else if (gamepad2.left_stick_x >=0.15 || gamepad2.left_stick_x <=-0.15){
-            m_leftshooter.setVelocity(-joystickVel );
-            m_rightshooter.setVelocity( joystickVel );
+            m_leftshooter.setPower(-joystickVel );
+            m_rightshooter.setPower( joystickVel );
         }
         else {
-            m_leftshooter.setVelocity(0);
-             m_rightshooter.setVelocity(0);
+            m_leftshooter.setPower(0);
+             m_rightshooter.setPower(0);
+        }
+
+
+        if (m_rightshooter.getVelocity() >= actualVelocity-10){
+            s_midintake.setPower(1);
+        }
+        else {
+            s_midintake.setPower(0);
         }
     }
 
@@ -146,25 +156,19 @@ public class RobotCode_20252P extends OpMode {
 
         if (gamepad2.left_trigger >=0.15){
             m_intake.setPower(velTrigger);
-            s_midintake.setPower(1);
         }
         else if (gamepad2.right_stick_x >= 0.15 || gamepad2.right_stick_x <= -0.15){
             m_intake.setPower(velJoystick);
-            s_midintake.setPower(0);
 
         }
         else {
-            s_midintake.setPower(0);
             m_intake.setPower(0);
         }
 
     }
     public void servoMechanism(){
-        if (gamepad2.back) {
+        if (gamepad2.left_bumper) {
             s_midintake.setPower(1);
-        }
-        if (gamepad2.start) {
-            s_midintake.setPower(0);
         }
     }
 
