@@ -23,8 +23,8 @@ public class RobotCode_20252P extends OpMode {
 
     //---------------------------G-l-o-b-a-l--------------------------
 
-    double DesearedRPMlong = 1140 ;
-    final double DesearedRPMshort = 900;
+    double DesearedRPMlong = 1200 ;
+    final double DesearedRPMshort = 1040; //960
 
 
     @Override
@@ -56,6 +56,7 @@ public class RobotCode_20252P extends OpMode {
         m_br.setDirection(DcMotorSimple.Direction.REVERSE);
         m_fl.setDirection(DcMotorSimple.Direction.FORWARD);
         m_intake.setDirection(DcMotorSimple.Direction.REVERSE);
+        s_midintake.setDirection(DcMotorSimple.Direction.REVERSE);
 
 
     }
@@ -90,14 +91,21 @@ public class RobotCode_20252P extends OpMode {
         double y = gamepad1.left_stick_y * 2;
         double x = -gamepad1.left_stick_x * 2;
         double rx = gamepad1.right_stick_x * 3;
+
+        if (gamepad1.right_bumper){
+            y = gamepad1.left_stick_y * .5;
+            x = -gamepad1.left_stick_x * .5;
+            rx = gamepad1.right_stick_x * .5;
+        }
+
         double botHeading = Math.toRadians(IMUHeading.getHeading(AngleUnit.DEGREES));
 
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
 
-        double FLpower = rotY + rotX - rx;
+        double FLpower = - rotY + rotX - rx;
         double BLpower = rotY - rotX - rx;
-        double FRpower = rotY - rotX + rx;
+        double FRpower = - rotY - rotX + rx;
         double BRpower = rotY + rotX + rx;
 
         double MaxPower = Math.max(1.0, Math.max(Math.abs(FLpower),
@@ -109,6 +117,7 @@ public class RobotCode_20252P extends OpMode {
         m_fr.setPower(FRpower / MaxPower);
         m_bl.setPower(BLpower / MaxPower);
         m_br.setPower(BRpower / MaxPower);
+
     }
 
     public void shootMechanism() {
@@ -168,7 +177,7 @@ public class RobotCode_20252P extends OpMode {
     }
     public void servoMechanism(){
         if (gamepad2.left_bumper) {
-            s_midintake.setPower(1);
+            s_midintake.setPower(0);
         }
     }
 

@@ -92,12 +92,6 @@ public class AutonomousCloseOnlyMove extends LinearOpMode {
             telemetry.update();
             idle();
         }
-        double brakePower = -0.10;
-
-        m_fl.setPower(0);
-        m_fr.setPower(0);
-        m_bl.setPower(brakePower);
-        m_br.setPower(brakePower);
 
         stopMotors();
     }

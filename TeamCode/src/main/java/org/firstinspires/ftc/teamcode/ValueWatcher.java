@@ -2,8 +2,10 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
+import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -14,6 +16,7 @@ public class ValueWatcher extends OpMode {
     DcMotorEx m_fr;
     DcMotorEx m_leftshooter;
     DcMotorEx m_rightshooter;
+    CRServo s_servo;
     @Override
     public void init() {
         IMU.init(hardwareMap);
@@ -21,6 +24,9 @@ public class ValueWatcher extends OpMode {
         m_rightshooter = hardwareMap.get(DcMotorEx.class, "ShooterMotorB");
         m_fr = hardwareMap.get(DcMotorEx.class, "FRMotor");
         m_fl = hardwareMap.get(DcMotorEx.class, "FLMotor");
+        s_servo = hardwareMap.get(CRServo.class, "Servo");
+
+        s_servo.setDirection(CRServo.Direction.REVERSE);
         m_rightshooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
 
         m_fr.setMode(DcMotorEx.RunMode.STOP_AND_RESET_ENCODER);
@@ -42,5 +48,11 @@ public class ValueWatcher extends OpMode {
 
         if (gamepad1.back)
             IMU.resetImu();
+        if (gamepad1.a){
+            s_servo.setPower(1);
+        }
+        else {
+            s_servo.setPower(0);
+        }
     }
 }
