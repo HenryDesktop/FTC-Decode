@@ -12,7 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Autonomous
-public class AutonomousClose2LinesFULL extends LinearOpMode {
+public class AutonomousFar1LinesRED extends LinearOpMode {
     DcMotorEx m_fl, m_fr, m_bl, m_br;
     DcMotorEx m_intake;
     DcMotorEx m_leftshooter;
@@ -22,7 +22,7 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
     ConfigureDistance distance = new ConfigureDistance();
     ConfigureColor shootdistance = new ConfigureColor();
     double TICKSRPM = 42.8;
-    double DesearedRPMshort = 1000;
+    double DesearedRPMLong = 1140;
 
 
     @Override
@@ -69,26 +69,23 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         if (opModeIsActive()) {
             resetIMU();
             servoActive();
-            reverseClassifier(46, 1);
+            fowardClassifier(10, 1);
+            gyroClassifier();
             shootClassifier();
             servoActive();
-            degreesFirstLine();
-            fowardFirstLine(32, 0.4);
-            reverseFirstLine(30, 1);
-            GyroClassify1();
-            shootClassifier();
-            degreesFirstLine();
-            secondLineGo(28, 1);
-            degreesSecondLine();
-            fowardSecondLine(42, 0.4);
-            goToShootB(20, 0.5);
-            GyroClassify1();
-            shootClassifier();
+            degressCenter();
+            fowardFirstLineA(32, 0.5);
+            gyroFirstLine();
+            fowardFirstLineB(32, 0.5);
+            reverseFirstLineB(32, 1);
+            degressCenter();
+            reverseFirstLineA(20, 1);
+            gyroClassifier();
 
         }
     }
 
-    public void reverseClassifier(double inches, double power) {
+    public void fowardClassifier(double inches, double power) {
         int TICKSDISTANCE = (int) (inches * TICKSRPM);
 
         m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -106,8 +103,8 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         m_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         m_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
 
-        m_leftshooter.setVelocity(-DesearedRPMshort);
-        m_rightshooter.setVelocity(DesearedRPMshort);
+        m_leftshooter.setVelocity(-DesearedRPMLong);
+        m_rightshooter.setVelocity(DesearedRPMLong);
         m_fl.setPower(power);
         m_fr.setPower(power);
         m_bl.setPower(power);
@@ -164,11 +161,11 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         time.reset();
         while (opModeIsActive() && time.seconds() <= 5.8) {
             telemetry.addData("Actual time:", time.seconds());
-            m_leftshooter.setVelocity(-DesearedRPMshort);
-            m_rightshooter.setVelocity(DesearedRPMshort);
+            m_leftshooter.setVelocity(-DesearedRPMLong);
+            m_rightshooter.setVelocity(DesearedRPMLong);
 
             //----------Intake----------
-            if (m_rightshooter.getVelocity() >= DesearedRPMshort){
+            if (m_rightshooter.getVelocity() >= DesearedRPMLong){
                 m_intake.setPower(.7);
             }
             else {
@@ -176,7 +173,7 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
             }
 
             //----------Servo----------
-            if (m_rightshooter.getVelocity() >=DesearedRPMshort && shootdistance.getDistance()>=6.5){
+            if (m_rightshooter.getVelocity() >=DesearedRPMLong && shootdistance.getDistance()>=6.5){
                 s_midintake.setPosition(0.7);
             }
             else{
@@ -188,13 +185,13 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         stopMotors();
     }
 
-    public void degreesFirstLine() {
+    public void degressCenter() {
 
-        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) >= -39) {
-            m_bl.setPower(-.7);
-            m_br.setPower(.8);
-            m_fl.setPower(-.8);
-            m_fr.setPower(.8);
+        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) < 0) {
+            m_bl.setPower(.7);
+            m_br.setPower(-.8);
+            m_fl.setPower(.8);
+            m_fr.setPower(-.8);
 
             telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
             telemetry.update();
@@ -204,7 +201,41 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         stopMotors();
     }
 
-    public void fowardFirstLine(double inches, double power) {
+    public void fowardFirstLineA(double inches, double power) {
+        int TICKSDISTANCE = (int) (inches * TICKSRPM);
+
+        m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        m_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        m_br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+        m_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
+
+        m_fl.setTargetPosition(TICKSDISTANCE);
+        m_fr.setTargetPosition(TICKSDISTANCE);
+        m_bl.setTargetPosition(-TICKSDISTANCE);
+        m_br.setTargetPosition(-TICKSDISTANCE);
+
+        m_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        m_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        m_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+        m_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
+
+
+        m_fl.setPower(power);
+        m_fr.setPower(power);
+        m_bl.setPower(power);
+        m_br.setPower(power);
+
+        while (opModeIsActive() && (m_fl.isBusy() || m_fr.isBusy() || m_br.isBusy() || m_bl.isBusy())) {
+            telemetry.addData("Target:", TICKSDISTANCE);
+            telemetry.addData("FL Position:", m_fl.getCurrentPosition());
+            telemetry.addData("FR Position:", m_fr.getCurrentPosition());
+            telemetry.addData("BL Position:", m_bl.getCurrentPosition());
+            telemetry.addData("BR Position:", m_br.getCurrentPosition());
+            telemetry.update();
+            idle();
+        }
+    }
+    public void fowardFirstLineB(double inches, double power) {
         int TICKSDISTANCE = (int) (inches * TICKSRPM);
 
         m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -244,9 +275,8 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
             idle();
         }
     }
-    public void reverseFirstLine(double inches, double power) {
+    public void reverseFirstLineB(double inches, double power) {
         int TICKSDISTANCE = (int) (inches * TICKSRPM);
-
 
         m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
         m_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -268,6 +298,11 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         m_fr.setPower(power);
         m_bl.setPower(power);
         m_br.setPower(power);
+        m_intake.setPower(.8);
+
+        if (m_intake.getPower() >0){
+            s_midintake.setPosition(0.3);
+        }
 
 
         while (opModeIsActive() && (m_fl.isBusy() || m_fr.isBusy() || m_br.isBusy() || m_bl.isBusy())) {
@@ -280,54 +315,7 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
             idle();
         }
     }
-    public void GyroClassify1() {
-
-
-        m_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-
-        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) <= 0) {
-            m_leftshooter.setVelocity(-DesearedRPMshort);
-            m_rightshooter.setVelocity(DesearedRPMshort);
-
-            m_bl.setPower(.7);
-            m_br.setPower(-.8);
-            m_fl.setPower(.7);
-            m_fr.setPower(-.8);
-
-            telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
-            telemetry.update();
-            idle();
-        }
-
-        stopMotors();
-    }
-    public void GyroClassifyReverse() {
-
-        m_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-
-        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) >=5) {
-            m_bl.setPower(-.8);
-            m_br.setPower(.8);
-            m_fl.setPower(-.8);
-            m_fr.setPower(.8);
-
-            telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
-            telemetry.update();
-            idle();
-        }
-
-        stopMotors();
-    }
-
-    public void secondLineGo(double inches, double power) {
+    public void reverseFirstLineA(double inches, double power) {
         int TICKSDISTANCE = (int) (inches * TICKSRPM);
 
         m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
@@ -336,66 +324,9 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         m_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
         m_fl.setTargetPosition(-TICKSDISTANCE);
-        m_fr.setTargetPosition(TICKSDISTANCE);
+        m_fr.setTargetPosition(-TICKSDISTANCE);
         m_bl.setTargetPosition(TICKSDISTANCE);
-        m_br.setTargetPosition(-TICKSDISTANCE);
-
-        m_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        m_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        m_br.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        m_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-
-        m_fl.setPower(power);
-        m_fr.setPower(-power);
-        m_bl.setPower(power);
-        m_br.setPower(-power);
-
-
-        while (opModeIsActive() && (m_fl.isBusy() || m_fr.isBusy() || m_br.isBusy() || m_bl.isBusy())) {
-            telemetry.addData("Target:", TICKSDISTANCE);
-            telemetry.addData("FL Position:", m_fl.getCurrentPosition());
-            telemetry.addData("FR Position:", m_fr.getCurrentPosition());
-            telemetry.addData("BL Position:", m_bl.getCurrentPosition());
-            telemetry.addData("BR Position:", m_br.getCurrentPosition());
-            telemetry.update();
-            idle();
-        }
-    }
-    public void degreesSecondLine() {
-
-
-        m_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-        m_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
-
-        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) >= -42) {
-            m_bl.setPower(-.7);
-            m_br.setPower(.8);
-            m_fl.setPower(-.8);
-            m_fr.setPower(.8);
-
-            telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
-            telemetry.update();
-            idle();
-        }
-
-        stopMotors();
-    }
-
-    public void fowardSecondLine(double inches, double power) {
-        int TICKSDISTANCE = (int) (inches * TICKSRPM);
-
-        m_fl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_br.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-
-        m_fl.setTargetPosition(TICKSDISTANCE);
-        m_fr.setTargetPosition(TICKSDISTANCE);
-        m_bl.setTargetPosition(-TICKSDISTANCE);
-        m_br.setTargetPosition(-TICKSDISTANCE);
+        m_br.setTargetPosition(TICKSDISTANCE);
 
         m_fl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
         m_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
@@ -409,6 +340,11 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
         m_br.setPower(power);
         m_intake.setPower(.8);
 
+        if (m_intake.getPower() >0){
+            s_midintake.setPosition(0.3);
+        }
+
+
         while (opModeIsActive() && (m_fl.isBusy() || m_fr.isBusy() || m_br.isBusy() || m_bl.isBusy())) {
             telemetry.addData("Target:", TICKSDISTANCE);
             telemetry.addData("FL Position:", m_fl.getCurrentPosition());
@@ -419,40 +355,51 @@ public class AutonomousClose2LinesFULL extends LinearOpMode {
             idle();
         }
     }
-    public void goToShootB(double inches, double power) {
-        int TICKSDISTANCE = (int) (inches * TICKSRPM);
+    public void gyroFirstLine() {
+
 
         m_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        m_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        m_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
         m_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
 
-        m_fr.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.STOP_AND_RESET_ENCODER);
 
-        m_fr.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
-        m_bl.setMode(DcMotor.RunMode.RUN_USING_ENCODER);
+        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) >= -90) {
 
-        m_fr.setTargetPosition(-TICKSDISTANCE);
-        m_bl.setTargetPosition(TICKSDISTANCE);
+            m_bl.setPower(-.7);
+            m_br.setPower(.8);
+            m_fl.setPower(-.7);
+            m_fr.setPower(.8);
 
-        m_fr.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-        m_bl.setMode(DcMotor.RunMode.RUN_TO_POSITION);
-
-        m_fl.setPower(0);
-        m_fr.setPower(power);
-        m_br.setPower(0);
-        m_bl.setPower(power);
-
-        while (opModeIsActive() && (m_fr.isBusy() || m_bl.isBusy())) {
-            telemetry.addData("Target:", TICKSDISTANCE);
-            telemetry.addData("FL Position:", m_fl.getCurrentPosition());
-            telemetry.addData("FR Position:", m_fr.getCurrentPosition());
-            telemetry.addData("BL Position:", m_bl.getCurrentPosition());
-            telemetry.addData("BR Position:", m_br.getCurrentPosition());
+            telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
             telemetry.update();
             idle();
         }
-        stopMotors();
 
+        stopMotors();
+    }
+    public void gyroClassifier() {
+
+
+        m_fl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        m_fr.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        m_bl.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+        m_br.setMode(DcMotor.RunMode.RUN_WITHOUT_ENCODER);
+
+
+        while (opModeIsActive() && imu.getHeading(AngleUnit.DEGREES) > -14) {
+
+            m_bl.setPower(-.7);
+            m_br.setPower(.8);
+            m_fl.setPower(-.7);
+            m_fr.setPower(.8);
+
+            telemetry.addData("Current Orientation:", imu.getHeading(AngleUnit.DEGREES));
+            telemetry.update();
+            idle();
+        }
+
+        stopMotors();
     }
 
     public void resetIMU(){

@@ -2,16 +2,14 @@ package org.firstinspires.ftc.teamcode;
 
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
-import com.qualcomm.robotcore.hardware.CRServo;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.Servo;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
-@TeleOp(name = "RobotCode2P")
-public class RobotCode_20252P extends OpMode {
+@TeleOp(name = "RobotCode2PostureCorrector")
+public class RobotCode_20252PostureCorrector extends OpMode {
     //---------------------------C-h-a-s-i-s--------------------------
     DcMotorEx m_fl, m_fr, m_bl, m_br;
     DcMotorEx m_intake;
@@ -20,6 +18,7 @@ public class RobotCode_20252P extends OpMode {
     Servo s_midintake;
     ConfigureIMU IMUHeading = new ConfigureIMU();
     ConfigureColor colorsensor = new ConfigureColor();
+    ConfigureColorAlt poscorrector = new ConfigureColorAlt();
 
 
 
@@ -29,6 +28,7 @@ public class RobotCode_20252P extends OpMode {
 
     double actualVelocity;
     final double DesearedRPMshort = 1040; //960
+    boolean isCorrector = false;
 
 
     @Override
@@ -50,6 +50,7 @@ public class RobotCode_20252P extends OpMode {
 
         IMUHeading.init(hardwareMap);
         colorsensor.init(hardwareMap);
+        poscorrector.init(hardwareMap);
 
         m_rightshooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         m_intake.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -81,6 +82,8 @@ public class RobotCode_20252P extends OpMode {
         telemetry.addData("Velocidad del recolector:",m_intake.getVelocity());
         telemetry.addData("Posición del servo:", s_midintake.getPosition());
         telemetry.addData("Distancia de color:", colorsensor.getDistance());
+        telemetry.addData("Correción de postura:", poscorrector.getDistance());
+        telemetry.addData("Corrector activo:", isCorrector);
         telemetry.update();
 
 
@@ -110,9 +113,9 @@ public class RobotCode_20252P extends OpMode {
         double rotX = x * Math.cos(-botHeading) - y * Math.sin(-botHeading);
         double rotY = x * Math.sin(-botHeading) + y * Math.cos(-botHeading);
 
-        double FLpower = rotY + rotX - rx;
+        double FLpower = - rotY + rotX - rx;
         double BLpower = rotY - rotX - rx;
-        double FRpower = rotY - rotX + rx;
+        double FRpower = - rotY - rotX + rx;
         double BRpower = rotY + rotX + rx;
 
         double MaxPower = Math.max(1.0, Math.max(Math.abs(FLpower),
@@ -120,10 +123,23 @@ public class RobotCode_20252P extends OpMode {
                         Math.max(Math.abs(BLpower),
                                 Math.abs(BRpower)))));
 
+        if (gamepad1.left_bumper){
+            isCorrector = true;
+            if (poscorrector.getDistance() <= 70){
+                if (y >= 0.1){
+                    FLpower = 0;
+                    BLpower = 0;
+                    FRpower = 0;
+                    BRpower = 0;
+                }
+            }
+        }
+
         m_fl.setPower(FLpower / MaxPower);
         m_fr.setPower(FRpower / MaxPower);
         m_bl.setPower(BLpower / MaxPower);
         m_br.setPower(BRpower / MaxPower);
+
 
     }
 
