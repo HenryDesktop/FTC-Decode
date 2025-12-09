@@ -17,13 +17,17 @@ public class RobotCode_20252P extends OpMode {
     DcMotorEx m_intake;
     DcMotorEx m_leftshooter;
     DcMotorEx m_rightshooter;
-    CRServo s_midintake;
+    Servo s_midintake;
     ConfigureIMU IMUHeading = new ConfigureIMU();
+    ConfigureColor colorsensor = new ConfigureColor();
+
 
 
     //---------------------------G-l-o-b-a-l--------------------------
 
     double DesearedRPMlong = 1200 ;
+
+    double actualVelocity;
     final double DesearedRPMshort = 1040; //960
 
 
@@ -42,9 +46,10 @@ public class RobotCode_20252P extends OpMode {
         m_leftshooter = hardwareMap.get(DcMotorEx.class, "ShooterMotorA");
         m_rightshooter = hardwareMap.get(DcMotorEx.class, "ShooterMotorB");
 
-        s_midintake = hardwareMap.get(CRServo.class, "Servo");
+        s_midintake = hardwareMap.get(Servo.class, "Servo");
 
         IMUHeading.init(hardwareMap);
+        colorsensor.init(hardwareMap);
 
         m_rightshooter.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
         m_intake.setMode(DcMotorEx.RunMode.RUN_USING_ENCODER);
@@ -56,7 +61,7 @@ public class RobotCode_20252P extends OpMode {
         m_br.setDirection(DcMotorSimple.Direction.REVERSE);
         m_fl.setDirection(DcMotorSimple.Direction.FORWARD);
         m_intake.setDirection(DcMotorSimple.Direction.REVERSE);
-        s_midintake.setDirection(DcMotorSimple.Direction.REVERSE);
+        s_midintake.setDirection(Servo.Direction.REVERSE);
 
 
     }
@@ -74,6 +79,8 @@ public class RobotCode_20252P extends OpMode {
         telemetry.addData("RPM del disparador:", DesearedRPMlong);
         telemetry.addData("Velocidad del disparador:", m_rightshooter.getVelocity());
         telemetry.addData("Velocidad del recolector:",m_intake.getVelocity());
+        telemetry.addData("Posición del servo:", s_midintake.getPosition());
+        telemetry.addData("Distancia de color:", colorsensor.getDistance());
         telemetry.update();
 
 
@@ -122,14 +129,14 @@ public class RobotCode_20252P extends OpMode {
 
     public void shootMechanism() {
 
-        double actualVelocity = DesearedRPMshort;
+        actualVelocity = DesearedRPMshort;
         double joystickVel = gamepad2.left_stick_x;
 
         // Selección de RPM
-        if (gamepad2.dpad_down)  DesearedRPMlong = 1080;
-        if (gamepad2.dpad_left)  DesearedRPMlong = 1120;
-        if (gamepad2.dpad_right) DesearedRPMlong = 1140;
-        if (gamepad2.dpad_up)    DesearedRPMlong = 1160;
+        if (gamepad2.dpad_down)  DesearedRPMlong = 1120;
+        if (gamepad2.dpad_left)  DesearedRPMlong = 1140;
+        if (gamepad2.dpad_right) DesearedRPMlong = 1170;
+        if (gamepad2.dpad_up)    DesearedRPMlong = 1190;
 
         if (gamepad2.right_bumper) {
             actualVelocity = DesearedRPMlong;
@@ -142,8 +149,8 @@ public class RobotCode_20252P extends OpMode {
 
         }
         else if (gamepad2.left_stick_x >=0.15 || gamepad2.left_stick_x <=-0.15){
-            m_leftshooter.setPower(-joystickVel );
-            m_rightshooter.setPower( joystickVel );
+            m_leftshooter.setPower(-joystickVel*.3 );
+            m_rightshooter.setPower( joystickVel*.3 );
         }
         else {
             m_leftshooter.setPower(0);
@@ -151,12 +158,17 @@ public class RobotCode_20252P extends OpMode {
         }
 
 
-        if (m_rightshooter.getVelocity() >= actualVelocity-10){
-            s_midintake.setPower(1);
+
+
+
+        if (colorsensor.getDistance() <=8 && m_rightshooter.getVelocity() >= actualVelocity){
+            s_midintake.setPosition(0.7);
         }
         else {
-            s_midintake.setPower(0);
+            s_midintake.setPosition(0.3);
         }
+
+
     }
 
     public void intakeMechanism(){
@@ -170,6 +182,9 @@ public class RobotCode_20252P extends OpMode {
             m_intake.setPower(velJoystick);
 
         }
+        else if (m_rightshooter.getVelocity() >= actualVelocity){
+            m_intake.setPower(.7);
+        }
         else {
             m_intake.setPower(0);
         }
@@ -177,12 +192,19 @@ public class RobotCode_20252P extends OpMode {
     }
     public void servoMechanism(){
         if (gamepad2.left_bumper) {
-            s_midintake.setPower(0);
+            s_midintake.setPosition(0.3);
+        }
+
+        if (gamepad2.back){
+            s_midintake.setPosition(0.7);
+        }
+        if (gamepad2.start){
+            s_midintake.setPosition(0.3);
         }
     }
 
     public void resetGyro(){
-        if (gamepad1.back && gamepad1.start){
+        if (gamepad1.start){
             IMUHeading.resetImu();
         }
     }
